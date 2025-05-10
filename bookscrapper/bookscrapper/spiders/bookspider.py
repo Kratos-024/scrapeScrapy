@@ -1,5 +1,5 @@
 import scrapy
-
+from bookscrapper.items import BookItem
 
 class BookspiderSpider(scrapy.Spider):
     name = "bookspider"
@@ -27,14 +27,7 @@ class BookspiderSpider(scrapy.Spider):
             yield response.follow(book_url,callback=self.parse_book_page) 
         next_page = response.css("li.next a::attr(href)").get()
        
-        if next_page:
-            
-            if 'catalogue/' in next_page:
-                next_page_url = "https://books.toscrape.com/" + next_page
-                yield response.follow(next_page_url,callback=self.parse)
-            else:
-                next_page_url = "https://books.toscrape.com/catalogue/" + next_page
-                yield response.follow(next_page_url,callback=self.parse)
+      
         # print("***********************************************")
         # books = response.css("article.product_pod")
         
@@ -44,15 +37,23 @@ class BookspiderSpider(scrapy.Spider):
         # title = response.css('div.product_main h1::text').get()
         # print(title)
         table_rows = response.css(".table-striped tr")
-        yield {
-            "title":response.xpath("/html/body/div/div/div[2]/div[2]/article/div[1]/div[2] /h1/text()").get(),
-            "url":response.url,
-            "product_type":table_rows[1].css("td ::text").get(),
-            "price_excel_tax":table_rows[2].css("td ::text").get(),
-            "price_incl_tax":table_rows[3].css("td ::text").get(),
-            "Availability":table_rows[5].css("td ::text").get(),
-            "ratting":response.css("p.star-rating ::attr('class')").get()[12:]
-        }
+        bookitem= BookItem()
+                    
+        bookitem["title"]=response.xpath("/html/body/div/div/div[2]/div[2]/article/div[1]/div[2] /h1/text()").get(),
+        bookitem["url"]=response.url,
+        bookitem["product_type"]=table_rows[1].css("td ::text").get(),
+        bookitem["price_excel_tax"]=table_rows[2].css("td ::text").get(),
+        bookitem["price_incl_tax"]=table_rows[3].css("td ::text").get(),
+        bookitem["Availability"]=table_rows[5].css("td ::text").get(),
+        bookitem["ratting"]=response.css("p.star-rating ::attr('class')").get()[12:],
+        bookitem["price"]= response.css("div.product_main .price_color::text").get(),
+        bookitem["description"]=response.xpath('//*[@id="content_inner"]/article/p/text()').get()
+        yield bookitem
+                    
+
+                
+
+            
         
         
 
